@@ -1,0 +1,10 @@
+
+__pycache__
+*/__pycache__ 
+*/__pycache__/*
+.DS_Store
+*.pyc
+dist/
+*/dist
+venv
+*/venv

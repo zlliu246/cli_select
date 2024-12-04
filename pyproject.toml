@@ -1,0 +1,28 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cli_select"
+version = "0.0.1"
+authors = [
+    { name="Liu Zuo Lin", email="zlliu246@gmail.com" },
+]
+description = "A package that enables MCQ select in terminal"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "unprint",
+    "toggle_cbreak",
+    "colorama"
+]
+
+[project.urls]
+Homepage = "https://github.com/zlliu246/cli_select"
+Issues = "https://github.com/zlliu246/cli_select/issues"
