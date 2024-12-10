@@ -1,7 +1,9 @@
 import sys
-from toggle_cbreak import cbreak_off, cbreak_on
+
+from .helper import print_qn_n_options
+
 from unprint import unprint
-from colorama import Fore, Back, Style
+from onkeypress import while_not_exit, onkeypress, Key
 
 def select(
     question: str,
@@ -30,112 +32,54 @@ def select(
     Returns:
         (str): user-selected option
     """
-
-    ESCAPE_CHARACTER_TO_NAME_MAP: dict[str, str] = {
-        '\x1b[A': "Up",
-        '\x1b[B': "Down",
+    qn_kwargs = {  # common kwargs to pass into print_qn_n_options()
+        "question": question,
+        "options": options,
+        "pointer": pointer,
+        "color": color,
+        "background_color": background_color,
     }
 
-    def print_qn_n_options(
-        option_index_to_focus: int = 0,
-        pointer: str = "=>",
-        color: str = "",
-        background_color: str = "",
-    ) -> int:
-        """
-        Prints question and options for users to see
-        Highlights option where index == option_index_to_focus
+    num_chars_printed = print_qn_n_options(**qn_kwargs)
 
-        Args:
-            option_index_to_focus (int): index where option is selected
-            pointer, color, background_color: inherited from parent function
+    state: dict = {
+        "option_index_to_focus": 0,
+        "num_chars_printed": num_chars_printed
+    }
+
+    def on_arrow_keypress(
+        key_str: str,
+        state: dict,
+    ) -> None:
+        """
+        Callback called when Up or Down arrow key is pressed
+        """
+        diff: int = -1 if key_str == "up" else 1
+        new_option_index_to_focus: int = state["option_index_to_focus"] + diff
+
+        if new_option_index_to_focus < 0 or new_option_index_to_focus >= len(options):
+            return  # out of bounds
         
-        Returns:
-            (int): number of lines printed by this function
-        """
-        RESET_STYLE = Fore.RESET + Back.RESET + Style.RESET_ALL
+        unprint(state["num_chars_printed"])
 
-        def get_colorama_color(
-            color_name: str,        # eg. "red", "green", "yellow"
-            kind: str = "fore"      #  eg. "fore", "back"
-        ) -> str: # eg. Fore.RED, Fore.GREEN, Fore.YELLOW
-            try:
-                return getattr(
-                    Fore if kind=="fore" else Back if kind=="back" else None, 
-                    color_name.upper()
-                )
-            except:
-                return ""
+        state["option_index_to_focus"] = new_option_index_to_focus
 
-        print(RESET_STYLE)
-        print(RESET_STYLE + question)
-        print(RESET_STYLE)
-
-        for index, option in enumerate(options):
-            option = option.replace("\n", "")  # options shouldn't have newlines inside
-            if index == option_index_to_focus:
-                style = (
-                    get_colorama_color(color, kind="fore") +
-                    get_colorama_color(background_color, kind="back") +
-                    pointer
-                )
-                print(style, option)
-            else:
-                print(RESET_STYLE + option)
-
-        print(RESET_STYLE, end="")
-        return len(options) + 3 + question.count("\n")
-
-    try:
-        cbreak_on()
-
-        num_chars_printed = print_qn_n_options(
-            pointer=pointer,
-            color=color,
-            background_color = background_color,
+        num_chars_printed: int = print_qn_n_options(
+            **qn_kwargs,
+            option_index_to_focus=state["option_index_to_focus"]
         )
 
-        current_option_index: int = 0
-        last3chars: str = "---"
+        state["num_chars_printed"] = num_chars_printed
 
-        while True:
-            input_char = sys.stdin.read(1)
 
-            if input_char == "\n":  # return when user hits Enter
-                return options[current_option_index]
-        
-            last3chars = last3chars[1:] + input_char
+    while_not_exit(
+        onkeypress(Key.UP).invoke(on_arrow_keypress, ["up", state]),
+        onkeypress(Key.DOWN).invoke(on_arrow_keypress, ["down", state]),
+        exit_key=Key.ENTER,
+    )
 
-            # handle only when user keys in Up or Down
-            if last3chars not in ESCAPE_CHARACTER_TO_NAME_MAP:
-                continue
+    selected_index: int = state["option_index_to_focus"]
+    return options[selected_index]
 
-            key_name: str = ESCAPE_CHARACTER_TO_NAME_MAP[last3chars]
-
-            if key_name == "Up":
-                if current_option_index <= 0: 
-                    # prevent index from going below 0
-                    continue
-                current_option_index -= 1
-
-            elif key_name == "Down":
-                if current_option_index >= len(options) - 1:
-                    # prevent index from going out of bounds
-                    continue
-                current_option_index += 1
-            
-            unprint(num_chars_printed)
-
-            num_chars_printed: int = print_qn_n_options(
-                option_index_to_focus=current_option_index,
-                pointer=pointer,
-                color=color,
-                background_color = background_color,
-            )
-
-    finally:
-        # always set terminal back to cooked mode
-        print()
-        cbreak_off()
 
 __all__ = ["select"]

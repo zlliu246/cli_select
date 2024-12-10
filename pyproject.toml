@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cli_select"
-version = "0.0.1"
+version = "0.0.3"
 authors = [
     { name="Liu Zuo Lin", email="zlliu246@gmail.com" },
 ]
@@ -19,8 +19,8 @@ classifiers = [
 ]
 dependencies = [
     "unprint",
-    "toggle_cbreak",
-    "colorama"
+    "colorama",
+    "onkeypress",
 ]
 
 [project.urls]
