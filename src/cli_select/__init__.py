@@ -40,13 +40,6 @@ def select(
         "background_color": background_color,
     }
 
-    num_chars_printed = print_qn_n_options(**qn_kwargs)
-
-    state: dict = {
-        "option_index_to_focus": 0,
-        "num_chars_printed": num_chars_printed
-    }
-
     def on_arrow_keypress(
         key_str: str,
         state: dict,
@@ -71,10 +64,16 @@ def select(
 
         state["num_chars_printed"] = num_chars_printed
 
+    num_chars_printed = print_qn_n_options(**qn_kwargs)
+
+    state: dict = {
+        "option_index_to_focus": 0,
+        "num_chars_printed": num_chars_printed
+    }
 
     while_not_exit(
-        onkeypress(Key.UP).invoke(on_arrow_keypress, ["up", state]),
-        onkeypress(Key.DOWN).invoke(on_arrow_keypress, ["down", state]),
+        onkeypress(Key.UP).call(on_arrow_keypress).args("up", state),
+        onkeypress(Key.DOWN).call(on_arrow_keypress).args("down", state),
         exit_key=Key.ENTER,
     )
 
